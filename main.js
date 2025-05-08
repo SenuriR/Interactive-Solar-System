@@ -17,6 +17,9 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; // adds smoothness to motion
 controls.dampingFactor = 0.05;
 
+let baseSpeedFactor = 0.005; // original normalized speed
+let speedMultiplier = 1.0;   // controlled by slider
+
 
 const sunGeometry = new THREE.SphereGeometry(1,32,32);
 const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
@@ -30,7 +33,7 @@ function createPlanet(radius, color, orbitRadius, orbitSpeed) {
     planet.position.x = orbitRadius;
   
     const orbitGroup = new THREE.Object3D();
-    orbitGroup.userData = { speed: orbitSpeed };
+    orbitGroup.userData = { baseSpeed: orbitSpeed };
     orbitGroup.add(planet);
     scene.add(orbitGroup);
   
@@ -115,16 +118,26 @@ audioLoader.load('rihanna_trim.mp3', function (buffer) {
 
 
 function animate() {
-    requestAnimationFrame(animate);
-    sun.rotation.y += 0.01;
-    // Rotate each orbit group
-    for (const orbit of orbits) {
-        orbit.rotation.y += orbit.userData.speed;
-    }
+  requestAnimationFrame(animate);
 
-    controls.update();
+  sun.rotation.y += 0.002;
 
-    renderer.render(scene, camera);
+  for (const orbit of orbits) {
+    const baseSpeed = orbit.userData.baseSpeed;
+    orbit.rotation.y += baseSpeed * baseSpeedFactor * speedMultiplier;
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
 }
+
+const slider = document.getElementById('timeSlider');
+const speedLabel = document.getElementById('speedDisplay');
+
+slider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(slider.value);
+  speedLabel.textContent = speedMultiplier.toFixed(1);
+});
+
 
 animate();
